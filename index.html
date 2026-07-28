@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Do You Love Me?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Playfair+Display:ital,wght@0,700;1,600&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#f6ede4;
+    --dusk:#120a12;
+    --dusk-2:#1c0f1c;
+    --plum:#3a1530;
+    --ember:#e0563f;
+    --rose:#e8a0a0;
+    --gold:#d9b26a;
+    --muted:#8c7a86;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    height:100%;
+    margin:0;
+  }
+
+  body{
+    background:
+      radial-gradient(ellipse 900px 600px at 50% 20%, var(--plum) 0%, transparent 60%),
+      radial-gradient(ellipse 700px 500px at 80% 90%, #2a1220 0%, transparent 55%),
+      var(--dusk);
+    color:var(--ink);
+    font-family:'Cormorant Garamond', serif;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    position:relative;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ambient drifting embers */
+  .ember-field{
+    position:fixed; inset:0; pointer-events:none; z-index:0;
+  }
+  .ember{
+    position:absolute;
+    bottom:-10px;
+    width:3px; height:3px;
+    border-radius:50%;
+    background:var(--ember);
+    opacity:0.55;
+    filter:blur(0.5px);
+    animation:rise linear infinite;
+  }
+  @keyframes rise{
+    0%{ transform:translateY(0) translateX(0); opacity:0; }
+    10%{ opacity:.6; }
+    90%{ opacity:.4; }
+    100%{ transform:translateY(-110vh) translateX(var(--drift,20px)); opacity:0; }
+  }
+
+  .stage{
+    position:relative;
+    z-index:1;
+    width:100%;
+    max-width:520px;
+    padding:48px 32px 64px;
+    text-align:center;
+  }
+
+  .eyebrow{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:11px;
+    letter-spacing:0.32em;
+    text-transform:uppercase;
+    color:var(--gold);
+    opacity:0.75;
+    margin-bottom:18px;
+  }
+
+  .scene{
+    display:none;
+    animation:fadeUp 0.7s ease both;
+  }
+  .scene.active{ display:block; }
+
+  @keyframes fadeUp{
+    from{ opacity:0; transform:translateY(14px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  /* ---------- SCENE 1: the question ---------- */
+
+  .heart-mark{
+    width:52px; height:52px;
+    margin:0 auto 22px;
+    position:relative;
+  }
+  .heart-mark svg{ width:100%; height:100%; }
+  .heart-mark path{
+    fill:none;
+    stroke:var(--ember);
+    stroke-width:1.4;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    filter:drop-shadow(0 0 6px rgba(224,86,63,0.5));
+  }
+
+  h1.question{
+    font-family:'Playfair Display', serif;
+    font-style:italic;
+    font-weight:600;
+    font-size:clamp(30px, 7vw, 42px);
+    line-height:1.15;
+    margin:0 0 40px;
+    color:var(--ink);
+  }
+
+  .choice-row{
+    position:relative;
+    height:64px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:16px;
+  }
+
+  .btn{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:15px;
+    letter-spacing:0.02em;
+    border:none;
+    border-radius:999px;
+    padding:16px 34px;
+    cursor:pointer;
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .btn-yes{
+    background:linear-gradient(135deg, var(--ember), #c73e5a);
+    color:#fff2ec;
+    box-shadow:0 8px 24px -8px rgba(224,86,63,0.7);
+  }
+  .btn-yes:hover{ transform:translateY(-2px) scale(1.03); }
+  .btn-yes:active{ transform:translateY(0) scale(0.98); }
+
+  .btn-no{
+    background:rgba(255,255,255,0.06);
+    color:var(--muted);
+    border:1px solid rgba(255,255,255,0.08);
+    transition:transform 0.15s ease;
+  }
+  #no-wrap{
+    transition:left 0.18s ease, top 0.18s ease;
+  }
+
+  .hint{
+    margin-top:26px;
+    font-family:'Space Grotesk', sans-serif;
+    font-size:12px;
+    letter-spacing:0.04em;
+    color:var(--muted);
+    opacity:0;
+    transition:opacity 0.4s ease;
+  }
+  .hint.show{ opacity:0.8; }
+
+  /* ---------- SCENE 2: I love you reveal ---------- */
+
+  .reveal-title{
+    font-family:'Playfair Display', serif;
+    font-weight:700;
+    font-size:clamp(38px, 10vw, 58px);
+    letter-spacing:0.02em;
+    background:linear-gradient(120deg, var(--ember), var(--gold) 55%, var(--rose));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    margin:0 0 6px;
+    text-shadow:0 0 40px rgba(224,86,63,0.25);
+  }
+
+  .reveal-sub{
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    font-size:20px;
+    color:var(--rose);
+    opacity:0.85;
+    margin:0 0 56px;
+  }
+
+  .envelope{
+    width:150px;
+    margin:0 auto 16px;
+    cursor:pointer;
+    position:relative;
+  }
+  .envelope svg{ width:100%; height:auto; display:block; }
+  .envelope-body{ fill:var(--ember); }
+  .envelope-flap{
+    fill:#c73e5a;
+    transform-origin:50% 8%;
+    transition:transform 0.35s ease;
+  }
+  .envelope:hover .envelope-flap{ transform:rotateX(25deg); }
+  .envelope-seal{ fill:var(--gold); }
+
+  .open-label{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:11px;
+    letter-spacing:0.28em;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+
+  /* ---------- name capture form ---------- */
+
+  .name-form{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+    margin-top:6px;
+  }
+
+  .name-input{
+    width:100%;
+    max-width:280px;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.14);
+    border-radius:999px;
+    padding:14px 22px;
+    color:var(--ink);
+    font-family:'Space Grotesk', sans-serif;
+    font-size:15px;
+    text-align:center;
+    outline:none;
+    transition:border-color 0.2s ease, background 0.2s ease;
+  }
+  .name-input::placeholder{ color:var(--muted); }
+  .name-input:focus{
+    border-color:var(--ember);
+    background:rgba(255,255,255,0.09);
+  }
+
+  .btn-ok{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:15px;
+    letter-spacing:0.02em;
+    border:none;
+    border-radius:999px;
+    padding:14px 40px;
+    cursor:pointer;
+    background:linear-gradient(135deg, var(--ember), #c73e5a);
+    color:#fff2ec;
+    box-shadow:0 8px 24px -8px rgba(224,86,63,0.7);
+    transition:transform 0.15s ease;
+  }
+  .btn-ok:hover{ transform:translateY(-2px) scale(1.03); }
+  .btn-ok:active{ transform:translateY(0) scale(0.98); }
+
+  .name-error{
+    margin-top:14px;
+    font-family:'Space Grotesk', sans-serif;
+    font-size:12px;
+    color:var(--rose);
+    opacity:0;
+    transition:opacity 0.3s ease;
+  }
+  .name-error.show{ opacity:0.9; }
+
+  /* ---------- SCENE 3: the letter ---------- */
+
+  .letter-card{
+    background:linear-gradient(180deg, #fbf3ea, #f3e4d4);
+    color:#3a2418;
+    border-radius:4px;
+    padding:44px 34px 34px;
+    text-align:left;
+    position:relative;
+    box-shadow:0 30px 70px -20px rgba(0,0,0,0.7);
+    transform:scale(0.9);
+    animation:cardPop 0.5s cubic-bezier(.2,1.4,.4,1) both;
+  }
+  @keyframes cardPop{
+    from{ opacity:0; transform:scale(0.85) translateY(10px); }
+    to{ opacity:1; transform:scale(1) translateY(0); }
+  }
+
+  .letter-card::before{
+    content:'';
+    position:absolute;
+    top:-10px; left:50%;
+    transform:translateX(-50%);
+    width:36px; height:36px;
+    background:var(--ember);
+    border-radius:50%;
+    box-shadow:0 4px 10px rgba(0,0,0,0.3);
+  }
+  .letter-card::after{
+    content:'♥';
+    position:absolute;
+    top:-19px; left:50%;
+    transform:translateX(-50%);
+    color:#fff;
+    font-size:16px;
+  }
+
+  .letter-heading{
+    font-family:'Playfair Display', serif;
+    font-style:italic;
+    font-weight:700;
+    font-size:26px;
+    color:#c73e5a;
+    margin:0 0 18px;
+  }
+
+  .letter-body{
+    font-family:'Cormorant Garamond', serif;
+    font-size:19px;
+    line-height:1.6;
+    color:#4a3223;
+    margin:0 0 28px;
+  }
+
+  .letter-sign{
+    font-family:'Playfair Display', serif;
+    font-style:italic;
+    font-size:17px;
+    color:#8a5a3d;
+    text-align:right;
+    margin-bottom:26px;
+  }
+
+  .btn-close{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    background:none;
+    border:1px solid #c73e5a;
+    color:#c73e5a;
+    border-radius:999px;
+    padding:11px 26px;
+    cursor:pointer;
+    display:block;
+    margin:0 auto;
+    transition:background 0.2s ease, color 0.2s ease;
+  }
+  .btn-close:hover{ background:#c73e5a; color:#fff; }
+
+  /* confetti */
+  .confetti-piece{
+    position:fixed;
+    top:-10px;
+    width:8px; height:14px;
+    z-index:5;
+    pointer-events:none;
+    opacity:0.9;
+    animation:confetti-fall linear forwards;
+  }
+  @keyframes confetti-fall{
+    to{ transform:translateY(110vh) rotate(var(--spin,540deg)); opacity:0.2; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .ember{ animation:none; display:none; }
+    .scene{ animation:none; }
+    .letter-card{ animation:none; }
+    .confetti-piece{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ember-field" id="emberField"></div>
+
+<div class="stage">
+
+  <!-- SCENE 1 -->
+  <div class="scene active" id="scene-ask">
+    <div class="eyebrow">a small confession</div>
+    <div class="heart-mark">
+      <svg viewBox="0 0 52 52">
+        <path d="M26 42 C10 30 4 20 8 12 C11 6 20 5 26 14 C32 5 41 6 44 12 C48 20 42 30 26 42 Z"/>
+      </svg>
+    </div>
+    <h1 class="question">Do you<br>love me?</h1>
+
+    <div class="choice-row">
+      <button class="btn btn-yes" id="yesBtn">Yes</button>
+      <div id="no-wrap">
+        <button class="btn btn-no" id="noBtn">No</button>
+      </div>
+    </div>
+    <div class="hint" id="hint">it's okay to be honest... but this button isn't cooperating</div>
+  </div>
+
+  <!-- SCENE 2: name capture -->
+  <div class="scene" id="scene-name">
+    <div class="reveal-title">I love you</div>
+    <p class="reveal-sub">forever &amp; always</p>
+
+    <div class="name-form">
+      <input type="text" id="nameInput" class="name-input" placeholder="Enter your name" maxlength="60">
+      <button class="btn-ok" id="okBtn">OK</button>
+    </div>
+    <p class="name-error" id="nameError">please tell me your name first 🥺</p>
+  </div>
+
+  <!-- SCENE 3: envelope -->
+  <div class="scene" id="scene-envelope">
+    <div class="eyebrow">a little something for you</div>
+    <div class="envelope" id="envelopeBtn" role="button" tabindex="0" aria-label="Open secret letter">
+      <svg viewBox="0 0 150 100">
+        <rect class="envelope-body" x="4" y="14" width="142" height="80" rx="4"/>
+        <polygon class="envelope-flap" points="4,14 75,60 146,14"/>
+        <circle class="envelope-seal" cx="75" cy="14" r="9"/>
+      </svg>
+    </div>
+    <div class="open-label">open secret letter</div>
+  </div>
+
+  <!-- SCENE 3 -->
+  <div class="scene" id="scene-letter">
+    <div class="letter-card">
+      <p class="letter-heading">For you, always</p>
+      <p class="letter-body" id="letterText">
+        You make my world brighter just by being in it. Every small moment
+        with you feels like something worth keeping — thank you for being you.
+      </p>
+      <p class="letter-sign">— with love</p>
+      <button class="btn-close" id="closeBtn">Close Letter</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ---------- ambient embers ----------
+  const emberField = document.getElementById('emberField');
+  for(let i=0;i<24;i++){
+    const e = document.createElement('div');
+    e.className = 'ember';
+    e.style.left = Math.random()*100 + 'vw';
+    e.style.setProperty('--drift', (Math.random()*60-30)+'px');
+    e.style.animationDuration = (7+Math.random()*8)+'s';
+    e.style.animationDelay = (Math.random()*8)+'s';
+    emberField.appendChild(e);
+  }
+
+  // ---------- scene 1: dodging No button ----------
+  const noWrap = document.getElementById('no-wrap');
+  const noBtn = document.getElementById('noBtn');
+  const yesBtn = document.getElementById('yesBtn');
+  const choiceRow = document.querySelector('.choice-row');
+  const hint = document.getElementById('hint');
+  let dodges = 0;
+  let escaped = false;
+
+  function dodge(){
+    dodges++;
+    if(dodges === 1){ hint.classList.add('show'); }
+
+    // first dodge: lock the button's current on-screen spot, then switch
+    // it to fixed positioning so it can roam the full viewport
+    if(!escaped){
+      const rect = noWrap.getBoundingClientRect();
+      noWrap.style.position = 'fixed';
+      noWrap.style.margin = '0';
+      noWrap.style.left = rect.left + 'px';
+      noWrap.style.top = rect.top + 'px';
+      noWrap.style.zIndex = '10';
+      void noWrap.offsetWidth; // force reflow so the next move animates
+      escaped = true;
+    }
+
+    const margin = 16;
+    const btnW = noBtn.offsetWidth;
+    const btnH = noBtn.offsetHeight;
+    const maxX = Math.max(window.innerWidth - btnW - margin, margin);
+    const maxY = Math.max(window.innerHeight - btnH - margin, margin);
+
+    const x = margin + Math.random() * (maxX - margin);
+    const y = margin + Math.random() * (maxY - margin);
+
+    noWrap.style.left = x + 'px';
+    noWrap.style.top = y + 'px';
+  }
+
+  window.addEventListener('resize', function(){
+    if(!escaped) return;
+    const margin = 16;
+    const rect = noWrap.getBoundingClientRect();
+    const maxX = Math.max(window.innerWidth - rect.width - margin, margin);
+    const maxY = Math.max(window.innerHeight - rect.height - margin, margin);
+    const x = Math.min(Math.max(rect.left, margin), maxX);
+    const y = Math.min(Math.max(rect.top, margin), maxY);
+    noWrap.style.left = x + 'px';
+    noWrap.style.top = y + 'px';
+  });
+
+  noBtn.addEventListener('mouseenter', dodge);
+  noBtn.addEventListener('touchstart', function(ev){
+    ev.preventDefault();
+    dodge();
+  }, {passive:false});
+  noBtn.addEventListener('click', function(ev){
+    // if somehow clicked, still dodge instead of doing anything
+    ev.preventDefault();
+    dodge();
+  });
+
+  yesBtn.addEventListener('click', function(){
+    showScene('scene-name');
+  });
+
+  // ---------- scene 2: name capture ----------
+  const nameInput = document.getElementById('nameInput');
+  const okBtn = document.getElementById('okBtn');
+  const nameError = document.getElementById('nameError');
+
+  okBtn.addEventListener('click', submitName);
+  nameInput.addEventListener('keypress', function(ev){
+    if(ev.key === 'Enter') submitName();
+  });
+
+  function submitName(){
+    const name = nameInput.value.trim();
+    if(!name){
+      nameError.classList.add('show');
+      nameInput.focus();
+      return;
+    }
+    nameError.classList.remove('show');
+    sendYesNotification(name);
+    showScene('scene-envelope');
+    burstHearts();
+  }
+
+  // ---------- email notification once name is submitted ----------
+  // FormSubmit.co will email you the first time to confirm this address —
+  // click the confirmation link once, and every future submission will
+  // notify you automatically after that. No backend required.
+  function sendYesNotification(name){
+    fetch('https://formsubmit.co/ajax/kahmad9966@gmail.com', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        _subject: 'She said Yes! 💌',
+        name: name,
+        message: name + ' has accepted your proposal!'
+      })
+    }).catch(function(err){
+      console.error('Notification failed:', err);
+    });
+  }
+
+  // ---------- scene switching ----------
+  function showScene(id){
+    document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  document.getElementById('envelopeBtn').addEventListener('click', openLetter);
+  document.getElementById('envelopeBtn').addEventListener('keypress', function(ev){
+    if(ev.key === 'Enter' || ev.key === ' ') openLetter();
+  });
+
+  function openLetter(){
+    showScene('scene-letter');
+    fireConfetti();
+  }
+
+  document.getElementById('closeBtn').addEventListener('click', function(){
+    resetNoButton();
+    nameInput.value = '';
+    nameError.classList.remove('show');
+    showScene('scene-ask');
+  });
+
+  function resetNoButton(){
+    escaped = false;
+    dodges = 0;
+    hint.classList.remove('show');
+    noWrap.style.position = '';
+    noWrap.style.left = '';
+    noWrap.style.top = '';
+    noWrap.style.margin = '';
+    noWrap.style.zIndex = '';
+  }
+
+  // ---------- confetti ----------
+  function fireConfetti(){
+    const colors = ['#e0563f','#d9b26a','#e8a0a0','#f6ede4','#c73e5a'];
+    for(let i=0;i<60;i++){
+      const c = document.createElement('div');
+      c.className = 'confetti-piece';
+      c.style.left = Math.random()*100 + 'vw';
+      c.style.background = colors[Math.floor(Math.random()*colors.length)];
+      c.style.setProperty('--spin', (Math.random()*720-360)+'deg');
+      c.style.animationDuration = (2.4 + Math.random()*1.8) + 's';
+      c.style.animationDelay = (Math.random()*0.4) + 's';
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 5000);
+    }
+  }
+
+  function burstHearts(){
+    // reuse confetti piece style but tinted for a softer feel on the reveal scene
+    const colors = ['#e0563f','#e8a0a0','#d9b26a'];
+    for(let i=0;i<26;i++){
+      const c = document.createElement('div');
+      c.className = 'confetti-piece';
+      c.style.left = Math.random()*100 + 'vw';
+      c.style.top = '-10px';
+      c.style.background = colors[Math.floor(Math.random()*colors.length)];
+      c.style.borderRadius = '50%';
+      c.style.width = c.style.height = (4 + Math.random()*4) + 'px';
+      c.style.animationDuration = (2 + Math.random()*1.5) + 's';
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 4000);
+    }
+  }
+</script>
+
+</body>
+</html>
